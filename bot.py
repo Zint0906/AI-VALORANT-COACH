@@ -18,7 +18,6 @@ intents.message_content = True
 client = discord.Client(intents=intents)
 app = FastAPI()
 
-# 명령어 접두사 설정 (예: !코칭)
 COMMAND_PREFIX = "!코칭"
 YT_REGEX = r'(https?://)?(www\.)?(youtube\.com/watch\?v=|youtu\.be/|youtube\.com/shorts/)[^\s]+'
 
@@ -44,7 +43,7 @@ def split_message(text: str, limit: int = 1900):
 async def on_ready():
     print(f'======================================')
     print(f'✅ 디스코드 봇 로그인 성공: {client.user.name}')
-    print(f'🎮 !코칭 명령어를 받을 준비가 되었습니다.')
+    print(f'🎮 우회 다운로드 모드가 활성화되었습니다.')
     print(f'======================================')
 
 @client.event
@@ -52,26 +51,29 @@ async def on_message(message: discord.Message):
     if message.author == client.user:
         return
 
-    # 메시지가 '!코칭'으로 시작하는지 확인
     if message.content.startswith(COMMAND_PREFIX):
-        # '!코칭' 뒤에 붙은 유튜브 링크 추출
         yt_match = re.search(YT_REGEX, message.content)
         
         if yt_match:
             youtube_url = yt_match.group(0)
             await handle_coaching_request(message, youtube_url)
         else:
-            # 명령어는 쳤는데 링크를 안 올렸거나 잘못 올린 경우 안내
-            await message.reply("❌ **[사용법]** `!코칭 [유튜브 영상 링크]` 형태로 입력해 주세요!\n(예시: `!코칭 https://youtu.be/...`)")
+            await message.reply("❌ **[사용법]** `!코칭 [유튜브 영상 링크]` 형태로 입력해 주세요!")
 
 async def handle_coaching_request(message: discord.Message, url: str):
     file_id = str(uuid.uuid4())[:8]
     local_file_path = f"temp_vod_{file_id}.mp4"
     
-    status_msg = await message.reply("🎯 **[AI Coach]** 분석 요청을 접수했습니다. 영상을 추출하고 있으니 잠시만 기다려 주세요...")
+    status_msg = await message.reply("🎯 **[AI Coach]** 분석 요청을 접수했습니다. 우회 통로로 영상을 추출하는 중입니다...")
     
     try:
-        await download_youtube_video(url, local_file_path)
+        # [🔥 핵심 우회 로직] 
+        # 유튜브 주소를 차단막이 없는 글로벌 프록시 도메인(yewtu.be)으로 강제 변환합니다.
+        bypass_url = url.replace("youtube.com", "yewtu.be").replace("youtu.be/", "yewtu.be/watch?v=")
+        
+        # 변환된 주소로 안전하게 다운로드 실행
+        await download_youtube_video(bypass_url, local_file_path)
+        
         await status_msg.edit(content="🎥 영상 추출 완료! AI 코치가 정밀 분석을 시작합니다.\n*(리포트 작성까지 약 2~4분이 소요됩니다.)*")
         
         feedback = await analyze_valorant_video(local_file_path)
@@ -107,3 +109,4 @@ if __name__ == '__main__':
         print("❌ DISCORD_BOT_TOKEN이 유실되었습니다.")
     else:
         asyncio.run(main())
+
