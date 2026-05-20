@@ -18,7 +18,7 @@ async def analyze_valorant_video(video_url_or_path: str) -> str:
     configure_gemini()
     
     # 멀티모달 영상 분석용 1.5 Pro 모델 호출
-    model = genai.GenerativeModel(model_name="gemini-1.5-pro")
+    model = genai.GenerativeModel(model_name="gemini-3.1-flash-lite")
     
     # 문자열이 웹 주소(http)인 경우: 다운로드 없이 주소와 프롬프트를 결합해 즉시 제미나이에 전달
     if video_url_or_path.startswith("http"):
